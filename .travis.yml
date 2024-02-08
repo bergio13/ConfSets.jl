@@ -1,0 +1,18 @@
+language: julia
+os:
+  - windows
+  - linux
+  - osx
+julia:
+  - 1.10
+  - nightly
+matrix:
+  allow_failures:
+    - julia: nightly
+notifications:
+  email: false
+after_success:
+  # push coverage results to Coveralls
+  - julia -e 'using Pkg; cd(Pkg.dir("ConfSets")); Pkg.add("Coverage"); using Coverage; Coveralls.submit(Coveralls.process_folder())'
+  # push coverage results to Codecov
+  - julia -e 'using Pkg; cd(Pkg.dir("ConfSets")); using Coverage; Codecov.submit(process_folder())'
