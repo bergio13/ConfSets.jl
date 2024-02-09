@@ -3,7 +3,7 @@
 
 # ConfSets.jl
 
-ConfSets.jl is a Julia library for computing confidence intervals and confidence sequences using various statistical methods including the Central Limit Theorem (CLT), Hoeffding's Inequality, and Chebyshev's Inequality. You can choose between confidence intervals and confidence sequences. In particular, if you are in a sequential setting, it is advisable to use confidence sequences as over time the confidence intervals will miscover the true mean in multiple instances. On the other hand, the confidence sequences are designed to simultaneously capture the true mean uniformly over time and asymptotically.
+ConfSets.jl is a Julia library for computing confidence intervals using various statistical methods including the Central Limit Theorem (CLT), Hoeffding's Inequality, and Chebyshev's Inequality and confidence sequences. In particular, if you are in a sequential setting, it is advisable to use confidence sequences as over time the confidence intervals will miscover the true mean in multiple instances. On the other hand, the confidence sequences are designed to simultaneously capture the true mean uniformly over time and asymptotically.
 
 ## Installation
 
