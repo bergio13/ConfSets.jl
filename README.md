@@ -18,7 +18,7 @@ add ConfSets
 Once installed, you can use the library to compute confidence intervals and confidence sequences using the following methods. In partiular, if you want to compute sequential sets, you can set the `sequential` parameter to `true`, otherwise sei it to `false`.
 
 ```julia
-using ConfidenceIntervals
+using ConfSets
 
 # Compute confidence interval using CLT
 data = [10.2, 12.3, 9.8, 11.5, 10.9]
