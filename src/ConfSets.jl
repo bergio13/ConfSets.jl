@@ -3,7 +3,7 @@ module ConfSets
 using Statistics
 using Distributions
 
-export cumul_mean, cumul_var, clt_std_margin, hoeff_margin, cheb_margin, ACS_margin, clt_confidence_interval, hoeff_confidence_interval, cheb_confidence_interval, Asymp_conf_seq
+export cumul_mean, confidence_interval, Asymp_conf_seq
 
 # This function computes the cumulative mean of a vector x, with regularizers for the observations and the mean.
 function cumul_mean(x::Vector, regularizer_obs=0, regularizer_mean=1 / 2)
@@ -131,6 +131,18 @@ function Asymp_conf_seq(x::Vector, alpha::Float64, sequential::Bool)
         st_dev = std(x)
         margin = ACS_margin(t, alpha) * st_dev
         return Dict("l" => mu_hat - margin, "u" => mu_hat + margin)
+    end
+end
+
+function confidence_interval(x::Vector, alpha::Float64, method::String; rang::Union{Float64,Int,Nothing}=nothing, sequential::Bool=false)
+    if method == "clt"
+        return clt_confidence_interval(x, alpha, sequential)
+    elseif method == "hoeffding"
+        return hoeff_confidence_interval(x, alpha, rang, sequential)
+    elseif method == "chebyshev"
+        return cheb_confidence_interval(x, alpha, sequential)
+    else
+        throw(ArgumentError("Method not recognized"))
     end
 end
 

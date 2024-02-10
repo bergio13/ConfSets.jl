@@ -1,10 +1,19 @@
 using ConfSets, Test, Statistics, Random
 
-
-function lower_upper(x, conf_set_fn, alpha, sequential)
-    lower = conf_set_fn(x, alpha, sequential)["l"]
-    upper = conf_set_fn(x, alpha, sequential)["u"]
-
+function lower_upper(x, method, alpha, sequential)
+    if method == "clt"
+        lower = confidence_interval(x, alpha, "clt", sequential=sequential)["l"]
+        upper = confidence_interval(x, alpha, "clt", sequential=sequential)["u"]
+    elseif method == "hoeffding"
+        lower = confidence_interval(x, alpha, "hoeffding", 10, sequential)["l"]
+        upper = confidence_interval(x, alpha, "hoeffding", 10, sequential)["u"]
+    elseif method == "chebyshev"
+        lower = confidence_interval(x, alpha, "chebyshev", sequential=sequential)["l"]
+        upper = confidence_interval(x, alpha, "chebyshev", sequential=sequential)["u"]
+    elseif method == "asymptotic_cs"
+        lower = Asymp_conf_seq(x, alpha, sequential)["l"]
+        upper = Asymp_conf_seq(x, alpha, sequential)["u"]
+    end
     return lower, upper
 end
 
@@ -28,13 +37,13 @@ Random.seed!(1234)
 x = randn(1000)
 true_mean = 0
 
-@test isapprox(clt_confidence_interval(x, 0.1, false)["u"], clt_confidence_interval(x, 0.1, true)["u"][end])
-@test isapprox(clt_confidence_interval(x, 0.1, false)["l"], clt_confidence_interval(x, 0.1, true)["l"][end])
+@test isapprox(confidence_interval(x, 0.1, "clt", sequential=false)["u"], confidence_interval(x, 0.1, "clt", sequential=true)["u"][end])
+@test isapprox(confidence_interval(x, 0.1, "clt", sequential=false)["l"], confidence_interval(x, 0.1, "clt", sequential=true)["l"][end])
 
-l, u = lower_upper(x, clt_confidence_interval, 0.05, false)
+l, u = lower_upper(x, "clt", 0.05, false)
 @test l <= mean(x) <= u
 
-l, u = lower_upper(x, clt_confidence_interval, 0.05, true)
+l, u = lower_upper(x, "clt", 0.05, true)
 @test l <= cumul_mean(x) <= u
 
 
@@ -43,7 +52,7 @@ diff2 = abs.(u .- true_mean)
 @test is_decreasing_on_average(diff1) == true
 @test is_decreasing_on_average(diff2) == true
 
-l, u = lower_upper(x, clt_confidence_interval, 0.01, true)
+l, u = lower_upper(x, "clt", 0.01, true)
 @test l < cumul_mean(x) < u
 
 diff1 = abs.(l .- true_mean)
@@ -51,7 +60,7 @@ diff2 = abs.(u .- true_mean)
 @test is_decreasing_on_average(diff1) == true
 @test is_decreasing_on_average(diff2) == true
 
-@test clt_confidence_interval(x, 0.05, true) == clt_confidence_interval(x, 0.05, true)
+@test confidence_interval(x, 0.05, "clt", sequential=true) == confidence_interval(x, 0.05, "clt", sequential=true)
 
 
 # Test the confidence intervals for the mean of a vector x, using the Hoeffding inequality.
@@ -64,36 +73,34 @@ true_mean = (a + b) / 2
 range = b - a
 float_range = float(range)
 
-@test hoeff_confidence_interval(x, 0.1, range, true) == hoeff_confidence_interval(x, 0.1, float_range, true)
-@test hoeff_confidence_interval(x, 0.05, range, true) == hoeff_confidence_interval(x, 0.05, float_range, true)
-@test hoeff_confidence_interval(x, 0.01, range, true) == hoeff_confidence_interval(x, 0.01, float_range, true)
+@test confidence_interval(x, 0.1, "hoeffding", rang=range, sequential=true) == confidence_interval(x, 0.1, "hoeffding", rang=float_range, sequential=true)
+@test confidence_interval(x, 0.05, "hoeffding", rang=range, sequential=true) == confidence_interval(x, 0.05, "hoeffding", rang=float_range, sequential=true)
+@test confidence_interval(x, 0.01, "hoeffding", rang=range, sequential=true) == confidence_interval(x, 0.01, "hoeffding", rang=float_range, sequential=true)
 
-lower = hoeff_confidence_interval(x, 0.1, range, true)["l"]
-upper = hoeff_confidence_interval(x, 0.1, range, true)["u"]
+lower = confidence_interval(x, 0.1, "hoeffding", rang=range, sequential=true)["l"]
+upper = confidence_interval(x, 0.1, "hoeffding", rang=range, sequential=true)["u"]
 @test lower < cumul_mean(x) < upper
 
-lower = hoeff_confidence_interval(x, 0.1, range, false)["l"]
-upper = hoeff_confidence_interval(x, 0.1, range, false)["u"]
+lower = confidence_interval(x, 0.1, "hoeffding", rang=range, sequential=false)["l"]
+upper = confidence_interval(x, 0.1, "hoeffding", rang=range, sequential=false)["u"]
 @test lower < mean(x) < upper
 
-lower = hoeff_confidence_interval(x, 0.05, float_range, true)["l"]
-upper = hoeff_confidence_interval(x, 0.05, float_range, true)["u"]
-
+lower = confidence_interval(x, 0.05, "hoeffding", rang=float_range, sequential=true)["l"]
+upper = confidence_interval(x, 0.05, "hoeffding", rang=float_range, sequential=true)["u"]
 @test lower < cumul_mean(x) < upper
 
-lower = hoeff_confidence_interval(x, 0.01, float_range, true)["l"]
-upper = hoeff_confidence_interval(x, 0.01, float_range, true)["u"]
-
+lower = confidence_interval(x, 0.01, "hoeffding", rang=float_range, sequential=true)["l"]
+upper = confidence_interval(x, 0.01, "hoeffding", rang=float_range, sequential=true)["u"]
 @test lower < cumul_mean(x) < upper
 
 
-diff1 = abs.(hoeff_confidence_interval(x, 0.05, range, true)["l"] .- true_mean)
-diff2 = abs.(hoeff_confidence_interval(x, 0.05, range, true)["u"] .- true_mean)
+diff1 = abs.(confidence_interval(x, 0.05, "hoeffding", rang=range, sequential=true)["l"] .- true_mean)
+diff2 = abs.(confidence_interval(x, 0.05, "hoeffding", rang=range, sequential=true)["u"] .- true_mean)
 @test is_decreasing_on_average(diff1) == true
 @test is_decreasing_on_average(diff2) == true
 
-@test isapprox(hoeff_confidence_interval(x, 0.1, range, false)["u"], hoeff_confidence_interval(x, 0.1, range, true)["u"][end])
-@test isapprox(hoeff_confidence_interval(x, 0.1, range, false)["l"], hoeff_confidence_interval(x, 0.1, range, true)["l"][end])
+@test isapprox(confidence_interval(x, 0.1, "hoeffding", rang=range, sequential=false)["u"], confidence_interval(x, 0.1, "hoeffding", rang=range, sequential=true)["u"][end])
+@test isapprox(confidence_interval(x, 0.1, "hoeffding", rang=range, sequential=false)["l"], confidence_interval(x, 0.1, "hoeffding", rang=range, sequential=true)["l"][end])
 
 
 # Test the confidence intervals for the mean of a vector x, using the Chebyshev inequality.
@@ -101,14 +108,14 @@ Random.seed!(1234)
 x = randn(1000)
 true_mean = 0
 
-l, u = lower_upper(x, cheb_confidence_interval, 0.1, true)
+l, u = lower_upper(x, "chebyshev", 0.1, true)
 @test l < cumul_mean(x) < u
 diff1 = abs.(l .- true_mean)
 diff2 = abs.(u .- true_mean)
 @test is_decreasing_on_average(diff1) == true
 @test is_decreasing_on_average(diff2) == true
 
-l, u = lower_upper(x, cheb_confidence_interval, 0.05, true)
+l, u = lower_upper(x, "chebyshev", 0.05, true)
 @test l < cumul_mean(x) < u
 
 diff1 = abs.(l .- true_mean)
@@ -116,13 +123,13 @@ diff2 = abs.(u .- true_mean)
 @test is_decreasing_on_average(diff1) == true
 @test is_decreasing_on_average(diff2) == true
 
-@test cheb_confidence_interval(x, 0.05, true) == cheb_confidence_interval(x, 0.05, true)
-@test cheb_confidence_interval(x, 0.01, true) == cheb_confidence_interval(x, 0.01, true)
+@test confidence_interval(x, 0.05, "chebyshev", sequential=true) == confidence_interval(x, 0.05, "chebyshev", sequential=true)
+@test confidence_interval(x, 0.01, "chebyshev", sequential=true) == confidence_interval(x, 0.01, "chebyshev", sequential=true)
 
-@test isapprox(cheb_confidence_interval(x, 0.1, false)["u"], cheb_confidence_interval(x, 0.1, true)["u"][end])
-@test isapprox(cheb_confidence_interval(x, 0.1, false)["l"], cheb_confidence_interval(x, 0.1, true)["l"][end])
+@test isapprox(confidence_interval(x, 0.1, "chebyshev", sequential=false)["u"], confidence_interval(x, 0.1, "chebyshev", sequential=true)["u"][end])
+@test isapprox(confidence_interval(x, 0.1, "chebyshev", sequential=false)["l"], confidence_interval(x, 0.1, "chebyshev", sequential=true)["l"][end])
 
-l, u = lower_upper(x, cheb_confidence_interval, 0.05, false)
+l, u = lower_upper(x, "chebyshev", 0.05, false)
 @test l <= mean(x) <= u
 
 
@@ -131,14 +138,14 @@ Random.seed!(1234)
 x = randn(1000)
 true_mean = 0
 
-l, u = lower_upper(x, Asymp_conf_seq, 0.05, true)
+l, u = lower_upper(x, "asymptotic_cs", 0.05, true)
 @test l <= cumul_mean(x) <= u
 diff1 = abs.(l .- true_mean)
 diff2 = abs.(u .- true_mean)
 @test is_decreasing_on_average(diff1) == true
 @test is_decreasing_on_average(diff2) == true
 
-l, u = lower_upper(x, Asymp_conf_seq, 0.01, true)
+l, u = lower_upper(x, "asymptotic_cs", 0.01, true)
 @test l <= cumul_mean(x) <= u
 diff1 = abs.(l .- true_mean)
 diff2 = abs.(u .- true_mean)
@@ -151,5 +158,8 @@ diff2 = abs.(u .- true_mean)
 @test isapprox(Asymp_conf_seq(x, 0.1, false)["u"], Asymp_conf_seq(x, 0.1, true)["u"][end])
 @test isapprox(Asymp_conf_seq(x, 0.1, false)["l"], Asymp_conf_seq(x, 0.1, true)["l"][end])
 
-l, u = lower_upper(x, Asymp_conf_seq, 0.05, false)
+l, u = lower_upper(x, "asymptotic_cs", 0.05, false)
 @test l <= mean(x) <= u
+
+
+@test_throws ArgumentError confidence_interval(x, 0.05, "cheb", sequential=true)

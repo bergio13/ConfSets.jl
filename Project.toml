@@ -1,7 +1,7 @@
 name = "ConfSets"
 uuid = "aad220d6-53bb-4824-ac0f-9e0382ca6dbc"
 authors = ["'Giochelavaipiatti' <78697256+bergio13@users.noreply.github.com>"]
-version = "0.1.0"
+version = "0.1.1"
 
 [deps]
 Distributions = "31c24e10-a181-5473-b8eb-7969acd0382f"
