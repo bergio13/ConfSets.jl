@@ -21,19 +21,20 @@ Once installed, you can use the library to compute confidence intervals and conf
 using ConfSets
 
 data = [10.2, 12.3, 9.8, 11.5, 10.9]
+alpha = 0.05
 
 # Compute confidence interval using CLT
-clt_interval = confidence_interval(data, alpha=0.05, method="clt", sequential=true)
+clt_interval = confidence_interval(data, alpha, "clt", sequential=true)
 
 # Compute confidence interval using Hoeffding's Inequality
 # The argument'rang'is the range of the data (e.g. if the distribution is in hte range 9-13 --> set rang=4)
-hoeffding_interval = confidence_interval(data, alpha=0.05, method="hoeffding", rang=3, sequential=false)
+hoeffding_interval = confidence_interval(data, alpha, "hoeffding", rang=3, sequential=false)
 
 # Compute confidence interval using Chebyshev's Inequality
-chebyshev_interval = confidence_interval(data, alpha=0.05, method="chebyshev", sequential=true)
+chebyshev_interval = confidence_interval(data, alpha, "chebyshev", sequential=true)
 
 # Compute Asymptotic Confidence Sequence
-asymptotic_sequence = Asymp_conf_seq(data, alpha=0.05, sequential=true)
+asymptotic_sequence = Asymp_conf_seq(data, alpha, sequential=true)
 ```
 
 ## Contributing
