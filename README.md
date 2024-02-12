@@ -27,8 +27,8 @@ alpha = 0.05
 clt_interval = confint(data, alpha, "clt", sequential=true)
 
 # Compute confidence interval using Hoeffding's Inequality
-# The argument'rang'is the range of the data (e.g. if the distribution is in hte range 9-13 --> set rang=4)
-hoeffding_interval = confint(data, alpha, "hoeffding", rang=3, sequential=false)
+# The argument'rang'is the range of the data (e.g. if the distribution is in the range 9-13 --> set rang=4)
+hoeffding_interval = confint(data, alpha, "hoeffding", rang=4, sequential=false)
 
 # Compute confidence interval using Chebyshev's Inequality
 chebyshev_interval = confint(data, alpha, "chebyshev", sequential=true)
