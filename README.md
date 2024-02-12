@@ -15,7 +15,7 @@ add ConfSets
 
 ## Usage
 
-Once installed, you can use the library to compute confidence intervals and confidence sequences using the following methods. In partiular, if you want to compute sequential sets, you can set the `sequential` parameter to `true`, otherwise sei it to `false`.
+Once installed, you can use the library to compute confidence intervals and confidence sequences using the methods shown below. Notice that if you want to compute sequential confidence sets, you can set the `sequential` parameter to `true`, otherwise set it to `false`.
 
 ```julia
 using ConfSets
