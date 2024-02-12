@@ -3,7 +3,7 @@ module ConfSets
 using Statistics
 using Distributions
 
-export cumul_mean, confidence_interval, Asymp_conf_seq
+export cumul_mean, confint, confseq
 
 # This function computes the cumulative mean of a vector x, with regularizers for the observations and the mean.
 function cumul_mean(x::Vector, regularizer_obs=0, regularizer_mean=1 / 2)
@@ -17,6 +17,7 @@ function cumul_var(x::Vector)
     return ((cumul_mean(x .^ 2) .- cumul_mean(x) .^ 2) .* t ./ (t .- 1))
 end
 
+############################################################################################################################
 
 # Gaussian margin
 function clt_std_margin(t::Vector, alpha::Float64)
@@ -58,6 +59,8 @@ function ACS_margin(t::Real, alpha::Float64)
     return 1.7 * nom / denom
 end
 
+######################################################################################################################
+
 # This function computes the confidence intervals for the mean of a vector x, using the Central Limit Theorem.
 function clt_confidence_interval(x::Vector, alpha::Float64, sequential::Bool)
     if sequential
@@ -67,13 +70,13 @@ function clt_confidence_interval(x::Vector, alpha::Float64, sequential::Bool)
         margin = clt_std_margin(t, alpha)
         std_margin = st_dev .* margin
         std_margin[isnan.(std_margin)] .= Inf
-        return Dict("l" => mu_hat .- std_margin, "u" => mu_hat .+ std_margin)
+        return (l=mu_hat .- std_margin, u=mu_hat .+ std_margin)
     else
         t = length(x)
         mu_hat = mean(x)
         st_dev = std(x)
         std_margin = clt_std_margin(t, alpha) * st_dev
-        return Dict("l" => mu_hat - std_margin, "u" => mu_hat + std_margin)
+        return (l=mu_hat - std_margin, u=mu_hat + std_margin)
     end
 end
 
@@ -88,14 +91,13 @@ function hoeff_confidence_interval(x::Vector, alpha::Float64, rang::Union{Float6
         mu_hat = cumul_mean(x)
         margin = hoeff_margin(t, alpha, rang)
         margin[isnan.(margin)] .= Inf
-        return Dict("l" => mu_hat .- margin, "u" => mu_hat .+ margin)
+        return (l=mu_hat .- margin, u=mu_hat .+ margin)
     else
         t = length(x)
         mu_hat = mean(x)
         margin = hoeff_margin(t, alpha, rang)
-        return Dict("l" => mu_hat - margin, "u" => mu_hat + margin)
+        return (l=mu_hat - margin, u=mu_hat + margin)
     end
-
 end
 
 # This function computes the confidence intervals for the mean of a vector x, using the Chebyshev inequality.
@@ -106,13 +108,13 @@ function cheb_confidence_interval(x::Vector, alpha::Float64, sequential::Bool)
         st_dev = cumul_var(x) .^ 0.5
         margin = cheb_margin(t, alpha) .* st_dev
         margin[isnan.(margin)] .= Inf
-        return Dict("l" => mu_hat .- margin, "u" => mu_hat .+ margin)
+        return (l=mu_hat .- margin, u=mu_hat .+ margin)
     else
         t = length(x)
         mu_hat = mean(x)
         st_dev = std(x)
         margin = cheb_margin(t, alpha) * st_dev
-        return Dict("l" => mu_hat - margin, "u" => mu_hat + margin)
+        return (l=mu_hat - margin, u=mu_hat + margin)
     end
 end
 
@@ -124,17 +126,19 @@ function Asymp_conf_seq(x::Vector, alpha::Float64, sequential::Bool)
         st_dev = cumul_var(x) .^ 0.5
         margin = ACS_margin(t, alpha) .* st_dev
         margin[isnan.(margin)] .= Inf
-        return Dict("l" => mu_hat .- margin, "u" => mu_hat .+ margin)
+        return (l=mu_hat .- margin, u=mu_hat .+ margin)
     else
         t = length(x)
         mu_hat = mean(x)
         st_dev = std(x)
         margin = ACS_margin(t, alpha) * st_dev
-        return Dict("l" => mu_hat - margin, "u" => mu_hat + margin)
+        return (l=mu_hat - margin, u=mu_hat + margin)
     end
 end
 
-function confidence_interval(x::Vector, alpha::Float64, method::String; rang::Union{Float64,Int,Nothing}=nothing, sequential::Bool=false)
+#############################################################################################################################
+
+function confint(x::Vector, alpha::Float64, method::String; rang::Union{Float64,Int,Nothing}=nothing, sequential::Bool=false)
     if method == "clt"
         return clt_confidence_interval(x, alpha, sequential)
     elseif method == "hoeffding"
@@ -146,6 +150,13 @@ function confidence_interval(x::Vector, alpha::Float64, method::String; rang::Un
     end
 end
 
+function confseq(x::Vector, alpha::Float64, method::String; sequential::Bool=false)
+    if method == "asymptotic"
+        return Asymp_conf_seq(x, alpha, sequential)
+    else
+        throw(ArgumentError("Method not recognized"))
+    end
+end
 
 
 end # module ConfSets
